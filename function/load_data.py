@@ -109,7 +109,7 @@ def load(wav_dir, csv_dir, groups, avg=None, std=None):
         n_IPTs = NUM_LABELS
         n_keys = MAX_MIDI - MIN_MIDI + 1
 
-        technique = {'chanyin': 0, 'dianyin': 6, 'shanghua': 2, 'xiahua': 3, 'huazhi':4, 'guazou': 4, 'lianmo': 4, 'liantuo': 4, 'yaozhi': 5, 'boxian': 1}
+        technique = {'tremolo': 0, 'plain': 1}
 
         IPT_label = np.zeros([n_IPTs, n_steps], dtype=int)
         pitch_label = np.zeros([n_keys, n_steps], dtype=int)
