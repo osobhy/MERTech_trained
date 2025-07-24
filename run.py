@@ -1,25 +1,17 @@
 import datetime
-
 date = datetime.datetime.now()
-
 import sys
-sys.path.append('./function')   # ensure our modules are on PYTHONPATH
-
-import os
-import random
-import numpy as np
-import torch
-from transformers import Wav2Vec2FeatureExtractor, DataCollatorWithPadding
-from datasets import load_dataset, Audio
-from datasets.features.audio import Audio as AudioFeature
-import librosa
-AudioFeature._TorchCodecAvailable = False
-
+sys.path.append('./function')
 from function.fit import *
 from function.model import *
-from function.config import *  # provides URL, BATCH_SIZE, MERT_SAMPLE_RATE, NUM_LABELS, MAX_MIDI, MIN_MIDI, FREEZE_ALL, saveName
-
-# Reproducibility
+from function.load_data import *
+from function.config import *
+from transformers import Wav2Vec2FeatureExtractor
+import torch
+import numpy as np
+import os
+import random
+os.environ['CUDA_VISIBLE_DEVICES'] = '0' # change
 
 def get_random_seed(seed):
     random.seed(seed)
@@ -29,131 +21,50 @@ def get_random_seed(seed):
     torch.cuda.manual_seed(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
-
 get_random_seed(42)
 
-# Output model directory
-out_model_fn = f"./data/model/{date.year}{date.month}{date.day}{date.hour}:{date.minute}:{date.second}/{saveName}/"
-os.makedirs(out_model_fn, exist_ok=True)
+#Obtain the weight of the loss function to alleviate class imbalance
+def get_weight(Ytr):#(1508, 375, 7)
+	mp = Ytr[:].sum(0).sum(0) #(7,)
+	mmp = mp.astype(np.float32) / mp.sum()
+	cc=((mmp.mean() / mmp) * ((1-mmp)/(1 - mmp.mean())))**0.3
+	inverse_feq = torch.from_numpy(cc)
+	return inverse_feq
 
-# Utility to compute class-imbalance weights
+out_model_fn = './data/model/%d%d%d%d:%d:%d/%s/'%(date.year,date.month,date.day,date.hour,date.minute,date.second,saveName)
+if not os.path.exists(out_model_fn):
+    os.makedirs(out_model_fn)
 
-def get_weight(Ytr):  # expects shape (num_samples, num_classes, num_frames)
-    mp = Ytr.sum(0).sum(0)            # (num_classes,)
-    mmp = mp.float() / mp.sum()
-    cc = ((mmp.mean() / mmp) * ((1 - mmp) / (1 - mmp.mean()))) ** 0.3
-    return cc
+# load data
+wav_dir = DATASET + '/data'
+csv_dir = DATASET + '/labels'
 
-# ————————————————————————————————
-# 1) Load & preprocess via Hugging Face Datasets
-# ————————————————————————————————
+groups = ['train']
+vali_groups = ['validation']
+
+Xtr,Ytr,Ytr_p,Ytr_o,avg,std = load(wav_dir,csv_dir,groups)
+Xva,Yva,Yva_p,Yva_o,va_avg,va_std = load(wav_dir,csv_dir,vali_groups,avg,std)
+print ('finishing data loading...')
+
 processor = Wav2Vec2FeatureExtractor.from_pretrained(URL, trust_remote_code=True)
+Xtrs = processor(Xtr, sampling_rate=MERT_SAMPLE_RATE, return_tensors="pt")
+Xvas = processor(Xva, sampling_rate=MERT_SAMPLE_RATE, return_tensors="pt")
 
-# Placeholder for label-generation logic
-from function.load_data import make_label_matrix  # implement this to mirror your old loader
+# Build Dataloader
+t_kwargs = {'batch_size': BATCH_SIZE, 'num_workers': 2, 'pin_memory': True, 'drop_last': True}
+v_kwargs = {'batch_size': 1, 'num_workers': 2, 'pin_memory': True}
+tr_loader = torch.utils.data.DataLoader(Data2Torch2([Xtrs["input_values"], Ytr, Ytr_p, Ytr_o]), shuffle=True, **t_kwargs)
+va_loader = torch.utils.data.DataLoader(Data2Torch2([Xvas["input_values"], Yva, Yva_p, Yva_o]), **v_kwargs)
+print ('finishing data building...')
 
-def build_labels_matrix(example):
-    """
-    Turn example's onset_time, offset_time, IPT, and note arrays
-    into a (num_frames × num_classes) torch.Tensor of labels.
-    """
-    return make_label_matrix(
-        example['onset_time'],
-        example['offset_time'],
-        example['IPT'],
-        example['note'],
-        sr=MERT_SAMPLE_RATE
-    )
-
-# Load splits
-
-def prepare_split(split_name):
-    # 1) Load only metadata (no decoding)
-    ds = load_dataset(
-        "ccmusic-database/Guzheng_Tech99",
-        split=split_name,
-        cache_dir="./hf_cache"
-    )
-    ds = ds.cast_column("audio", Audio(decode=False))  # <-- no 'mono' here
-
-    def map_fn(ex):
-        # 2) Read WAV yourself via Librosa
-        wav_path = ex["audio"]["path"]
-        y, sr = librosa.load(wav_path, sr=MERT_SAMPLE_RATE)
-
-        # 3) Feature‑extract
-        inputs = processor(
-            y,
-            sampling_rate=MERT_SAMPLE_RATE,
-            return_tensors="pt",
-            padding=False
-        )["input_values"].squeeze(0)
-
-        # 4) Build labels from the HF 'label' dict
-        lab = ex["label"]
-        labels = build_labels_matrix(
-            lab["onset"],
-            lab["offset"],
-            lab["technique"],
-            lab["pitch"],
-            total_samples=len(y)
-        )
-
-        return {"input_values": inputs, "labels": labels}
-
-    return ds.map(
-        map_fn,
-        remove_columns=["audio", "mel", "label"],
-        batched=False
-    )
-
-train_ds = prepare_split('train')
-val_ds   = prepare_split('validation')
-print('✔ Loaded HF dataset splits.')
-
-# Collator for padding
-collator = DataCollatorWithPadding(processor=processor, return_tensors='pt')
-
-# PyTorch DataLoaders
-tr_loader = torch.utils.data.DataLoader(
-    train_ds,
-    batch_size=BATCH_SIZE,
-    shuffle=True,
-    num_workers=2,
-    collate_fn=collator
-)
-va_loader = torch.utils.data.DataLoader(
-    val_ds,
-    batch_size=1,
-    num_workers=2,
-    collate_fn=collator
-)
-print('✔ DataLoaders are ready.')
-
-# Compute class-imbalance weights from all train labels
-all_labels = torch.stack([ex['labels'] for ex in train_ds], dim=0)  # (N, T, C)
-# transpose to (N, C, T)
-inverse_freq = get_weight(all_labels.transpose(0,2,1))
-
-# ————————————————————————————————
-# 2) Build model and train
-# ————————————————————————————————
-model = SSLNet(
-    url=URL,
-    class_num=NUM_LABELS*(MAX_MIDI-MIN_MIDI+1),
-    weight_sum=1,
-    freeze_all=FREEZE_ALL
-).to(device)
-
-print('Model structure:')
+model = SSLNet(url=URL, class_num=NUM_LABELS*(MAX_MIDI-MIN_MIDI+1),weight_sum=1,freeze_all=FREEZE_ALL).to(device)
+print(type(model))
+print("before modify:")
 print(Visualization(model).structure_graph())
 
-trainer = Trainer(
-    model,
-    lr=1e-3,
-    max_steps=10000,
-    output_dir=out_model_fn,
-    validation_interval=5,
-    save_interval=100
-)
-trainer.fit(tr_loader, va_loader, inverse_freq)
+#Obtain the weight of weighted loss
+inverse_feq = get_weight(Ytr.transpose(0,2,1))
+
+#Start training
+Trer = Trainer(model, 1e-3, 10000, out_model_fn, validation_interval=5, save_interval=100) #0.01
+Trer.fit(tr_loader, va_loader,inverse_feq)
