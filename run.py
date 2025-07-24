@@ -68,20 +68,20 @@ def build_labels_matrix(example):
 # Load splits
 
 def prepare_split(split_name):
-    # load metadata only—no decoding
+    # 1) Load only metadata (no decoding)
     ds = load_dataset(
         "ccmusic-database/Guzheng_Tech99",
         split=split_name,
         cache_dir="./hf_cache"
     )
-    # decode=False ⇒ you get only `path` + `bytes`, not the array
-    ds = ds.cast_column("audio",
-                        Audio(sampling_rate=None, mono=True, decode=False))
+    ds = ds.cast_column("audio", Audio(decode=False))  # <-- no 'mono' here
 
     def map_fn(ex):
-        # 1) load waveform ourselves from disk via librosa
+        # 2) Read WAV yourself via Librosa
         wav_path = ex["audio"]["path"]
         y, sr = librosa.load(wav_path, sr=MERT_SAMPLE_RATE)
+
+        # 3) Feature‑extract
         inputs = processor(
             y,
             sampling_rate=MERT_SAMPLE_RATE,
@@ -89,6 +89,7 @@ def prepare_split(split_name):
             padding=False
         )["input_values"].squeeze(0)
 
+        # 4) Build labels from the HF 'label' dict
         lab = ex["label"]
         labels = build_labels_matrix(
             lab["onset"],
@@ -97,6 +98,7 @@ def prepare_split(split_name):
             lab["pitch"],
             total_samples=len(y)
         )
+
         return {"input_values": inputs, "labels": labels}
 
     return ds.map(
