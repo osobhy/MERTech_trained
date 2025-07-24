@@ -1,51 +1,26 @@
-#!/usr/bin/env python3
-import os, io, csv
+import os
+import csv
 from datasets import load_dataset, Audio
-import soundfile as sf
 
-# 1) Where MERTech’s run.py will look
-BASE = "/workspace/MERTech/data/Guzheng_Tech99"
-for split in ["train", "validation", "test"]:
-    print(f"→ Processing split '{split}'")
+ROOT = "/workspace/Guzheng_Tech99"  # change if needed
+SPLITS = ["train", "validation", "test"]
 
-    # 2) Load only metadata (no torchcodec)
-    ds = load_dataset(
-        "ccmusic-database/Guzheng_Tech99",
-        split=split,
-        cache_dir=os.path.join(BASE, "hf_cache")
-    )
-    ds = ds.cast_column("audio", Audio(decode=False))
+for split in SPLITS:
+    # Load split (without decoding audio yet)
+    ds = load_dataset("ccmusic-database/Guzheng_Tech99", split=split, cache_dir=ROOT)
+    ds = ds.cast_column("audio", Audio(decode=True))  # now decode audio
 
-    # 3) Prepare output dirs that match MERTech’s loader:
-    #    DATASET/data/<split>/*.wav  and  DATASET/labels/<split>/*.csv
-    wav_out = os.path.join(BASE, "data", split)
-    csv_out = os.path.join(BASE, "labels", split)
-    os.makedirs(wav_out, exist_ok=True)
-    os.makedirs(csv_out, exist_ok=True)
+    wav_dir  = f"{ROOT}/data/{split}"
+    csv_path = f"{ROOT}/labels/{split}.csv"
 
-    # 4) Iterate and dump
-    for i, ex in enumerate(ds):
-        fname = f"{split}_{i:05d}"
-        wav_bytes = ex["audio"]["bytes"]
-        if wav_bytes is None:
-            raise RuntimeError(f"No embedded bytes for example {i} in {split}")
-        # decode and write WAV
-        arr, sr = sf.read(io.BytesIO(wav_bytes), dtype="float32")
-        sf.write(os.path.join(wav_out, fname + ".wav"), arr, sr)
+    os.makedirs(wav_dir, exist_ok=True)
+    os.makedirs(os.path.dirname(csv_path), exist_ok=True)
 
-        # write one CSV per file, with one row per note
-        label = ex["label"]
-        with open(os.path.join(csv_out, fname + ".csv"), "w", newline="") as f:
-            w = csv.writer(f)
-            w.writerow(["onset_time", "offset_time", "IPT", "note"])
-            for o, p, t, n in zip(
-                label["onset"],
-                label["offset"],
-                label["technique"],
-                label["pitch"]
-            ):
-                w.writerow([o, p, t, n])
+    with open(csv_path, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["onset_time", "offset_time", "note", "IPT"])
 
-    print(f"  • Wrote {len(ds)} .wav + .csv pairs for '{split}'")
-
-print("✅ Extraction complete.")
+        for i, ex in enumerate(ds):
+            wav_path = os.path.join(wav_dir, f"{i}.wav")
+            ex["audio"]["array"].tofile(wav_path)
+            writer.writerow([ex["onset_time"], ex["offset_time"], ex["note"], ex["IPT"]])
