@@ -12,6 +12,7 @@ import torch
 from transformers import Wav2Vec2FeatureExtractor, DataCollatorWithPadding
 from datasets import load_dataset, Audio
 from datasets.features.audio import Audio as AudioFeature
+import librosa
 AudioFeature._TorchCodecAvailable = False
 
 from function.fit import *
@@ -67,14 +68,22 @@ def build_labels_matrix(example):
 # Load splits
 
 def prepare_split(split_name):
-    ds = load_dataset("ccmusic-database/Guzheng_Tech99",
-                      split=split_name,
-                      cache_dir="./hf_cache")
-    ds = ds.cast_column("audio", Audio(decode=True))
+    # load metadata only—no decoding
+    ds = load_dataset(
+        "ccmusic-database/Guzheng_Tech99",
+        split=split_name,
+        cache_dir="./hf_cache"
+    )
+    # decode=False ⇒ you get only `path` + `bytes`, not the array
+    ds = ds.cast_column("audio",
+                        Audio(sampling_rate=None, mono=True, decode=False))
 
     def map_fn(ex):
+        # 1) load waveform ourselves from disk via librosa
+        wav_path = ex["audio"]["path"]
+        y, sr = librosa.load(wav_path, sr=MERT_SAMPLE_RATE)
         inputs = processor(
-            ex["audio"]["array"],
+            y,
             sampling_rate=MERT_SAMPLE_RATE,
             return_tensors="pt",
             padding=False
@@ -86,7 +95,7 @@ def prepare_split(split_name):
             lab["offset"],
             lab["technique"],
             lab["pitch"],
-            total_samples=len(ex["audio"]["array"])
+            total_samples=len(y)
         )
         return {"input_values": inputs, "labels": labels}
 
