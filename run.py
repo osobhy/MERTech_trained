@@ -12,6 +12,8 @@ import numpy as np
 import os
 import random
 #os.environ['CUDA_VISIBLE_DEVICES'] = '1' # change
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("Using device:", device)
 
 def get_random_seed(seed):
     random.seed(seed)
