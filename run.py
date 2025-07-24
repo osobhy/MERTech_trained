@@ -11,7 +11,7 @@ import torch
 import numpy as np
 import os
 import random
-os.environ['CUDA_VISIBLE_DEVICES'] = '0' # change
+os.environ['CUDA_VISIBLE_DEVICES'] = '1' # change
 
 def get_random_seed(seed):
     random.seed(seed)
