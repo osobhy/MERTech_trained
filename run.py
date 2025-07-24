@@ -65,29 +65,32 @@ def build_labels_matrix(example):
 # Load splits
 
 def prepare_split(split_name):
-    ds = load_dataset(
-        'ccmusic-database/Guzheng_Tech99',
-        split=split_name,
-        cache_dir='./hf_cache'
-    )
-    ds = ds.cast_column('audio', Audio(decode=True))
+    ds = load_dataset("ccmusic-database/Guzheng_Tech99",
+                      split=split_name,
+                      cache_dir="./hf_cache")
+    ds = ds.cast_column("audio", Audio(decode=True))
 
     def map_fn(ex):
-        # 1) audio → input_values
         inputs = processor(
-            ex['audio']['array'],
+            ex["audio"]["array"],
             sampling_rate=MERT_SAMPLE_RATE,
-            return_tensors='pt',
+            return_tensors="pt",
             padding=False
-        )['input_values'].squeeze(0)
-        # 2) labels
-        labels = build_labels_matrix(ex)
-        return {'input_values': inputs, 'labels': labels}
+        )["input_values"].squeeze(0)
 
-    # remove unused columns, apply mapping
+        lab = ex["label"]
+        labels = build_labels_matrix(
+            lab["onset"],
+            lab["offset"],
+            lab["technique"],
+            lab["pitch"],
+            total_samples=len(ex["audio"]["array"])
+        )
+        return {"input_values": inputs, "labels": labels}
+
     return ds.map(
         map_fn,
-        remove_columns=['audio', 'onset_time', 'offset_time', 'IPT', 'note'],
+        remove_columns=["audio", "mel", "label"],
         batched=False
     )
 
