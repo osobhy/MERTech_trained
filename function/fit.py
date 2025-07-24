@@ -7,7 +7,6 @@ from config import *
 import torch.optim.lr_scheduler as lr_scheduler
 from torch.nn.utils import clip_grad_norm_
 import math
-from visdom import Visdom
 from glob import glob
 import os
 
@@ -65,17 +64,6 @@ class Trainer:
         st = time.time()
 
         lr = self.lr
-
-        viz = Visdom()
-        viz.line([[0., 0.]], [0], win="IPT_loss_" + saveName, opts=dict(title="IPT_loss_" + saveName, legend=['train_loss', 'valid_loss']))
-        viz.line([[0.]], [0], win="IPT_precision_" + saveName, opts=dict(title="IPT_precision_" + saveName, legend=['valid_IPT_precision']))
-        viz.line([[0.]], [0], win="IPT_recall_" + saveName, opts=dict(title="IPT_recall_" + saveName, legend=['valid_IPT_recall']))
-        viz.line([[0.]], [0], win="IPT_F1_" + saveName, opts=dict(title="IPT_F1_" + saveName, legend=['valid_IPT_F1']))
-        viz.line([[0., 0.]], [0], win="pitch_loss_" + saveName, opts=dict(title="pitch_loss_" + saveName, legend=['train_loss', 'valid_loss']))
-        viz.line([[0.]], [0], win="pitch_precision_" + saveName, opts=dict(title="pitch_precision_" + saveName, legend=['valid_pitch_precision']))
-        viz.line([[0.]], [0], win="pitch_recall_" + saveName, opts=dict(title="pitch_recall_" + saveName, legend=['valid_pitch_recall']))
-        viz.line([[0.]], [0], win="pitch_F1_" + saveName, opts=dict(title="pitch_F1_" + saveName, legend=['valid_pitch_F1']))
-        viz.line([[0., 0.]], [0], win="onset_loss_" + saveName, opts=dict(title="onset_loss_" + saveName, legend=['train_loss', 'valid_loss']))
         best_acc = 0
         last_best_epoch = 1 #for early stopping
 
@@ -140,15 +128,6 @@ class Trainer:
                 eva_result = self.Tester(va_loader, len(va_loader.dataset), we)
                 self.model.train()
 
-                viz.line([[float(loss_total_i/len(tr_loader.dataset)), float(eva_result[0])]], [e - 1], win="IPT_loss_" + saveName, update='append')
-                viz.line([[float(eva_result[1])]], [e - 1], win="IPT_precision_" + saveName, update='append')
-                viz.line([[float(eva_result[2])]], [e - 1], win="IPT_recall_" + saveName, update='append')
-                viz.line([[float(eva_result[3])]], [e - 1], win="IPT_F1_" + saveName, update='append')
-                viz.line([[float(loss_total_p / len(tr_loader.dataset)), float(eva_result[4])]], [e - 1], win="pitch_loss_" + saveName, update='append')
-                viz.line([[float(eva_result[5])]], [e - 1], win="pitch_precision_" + saveName, update='append')
-                viz.line([[float(eva_result[6])]], [e - 1], win="pitch_recall_" + saveName, update='append')
-                viz.line([[float(eva_result[7])]], [e - 1], win="pitch_F1_" + saveName, update='append')
-                viz.line([[float(loss_total_o / len(tr_loader.dataset)), float(eva_result[8])]], [e - 1], win="onset_loss_" + saveName, update='append')
                 print("IPT_F1:", eva_result[3])
                 print("pitch_F1:", eva_result[7])
                 if eva_result[3] > best_acc:
