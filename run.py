@@ -11,6 +11,8 @@ import numpy as np
 import torch
 from transformers import Wav2Vec2FeatureExtractor, DataCollatorWithPadding
 from datasets import load_dataset, Audio
+from datasets.features.audio import Audio as AudioFeature
+AudioFeature._TorchCodecAvailable = False
 
 from function.fit import *
 from function.model import *
