@@ -10,6 +10,14 @@ from function.load_data import *
 import numpy as np
 import random
 import os
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--wav_dir",  required=True)
+parser.add_argument("--ckpt",     required=True)
+parser.add_argument("--out_dir",  required=True)
+args = parser.parse_args()
+
 
 def start_test():
     def get_random_seed(seed):
@@ -24,12 +32,12 @@ def start_test():
 
     #load model
     model = SSLNet(url=URL, class_num=NUM_LABELS*(MAX_MIDI-MIN_MIDI+1), weight_sum=1, freeze_all=FREEZE_ALL).to(device)
-    state_dict = torch.load('data/model/mul_onset_share_weight_detach_ft(final)/mul_onset_share_weight_detach_ft-MERT-v1-95M/best_e_1970',map_location="cpu")
+    state_dict = torch.load(args.ckpt, map_location="cpu")
     model.load_state_dict(state_dict)
 
     print('finishing loading model')
 
-    wav_dir = DATASET + '/data'
+    wav_dir = args.wav_dir
     csv_dir = DATASET + '/labels'
     test_group = ['test']
     Xte, Yte, Yte_p, Yte_o,  _, _ = load(wav_dir, csv_dir, test_group, None, None)
