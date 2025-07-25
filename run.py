@@ -14,6 +14,11 @@ import random
 #os.environ['CUDA_VISIBLE_DEVICES'] = '1' # change
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("Using device:", device)
+print(" torch.cuda.is_available():", torch.cuda.is_available())
+print(" torch.cuda.device_count():", torch.cuda.device_count())
+if device.type == "cuda":
+    print(" current_device:", torch.cuda.current_device())
+    print(" device_name   :", torch.cuda.get_device_name(device.index))
 
 def get_random_seed(seed):
     random.seed(seed)
