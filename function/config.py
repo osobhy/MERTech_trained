@@ -10,6 +10,8 @@ SAMPLE_RATE = 44100 #Raw audio sampling rate
 MERT_SAMPLE_RATE = 24000 if "MERT" in URL else 16000 #input audio sampling rate of MERT
 FEATURE_RATE = 75 # FEATURE_RATE = 1000//ZHEN_LENGTH，Sampling rate of feature extracted from MERT
 TWO_STEP = False # Whether two-step finetuning
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 LIN_EPOCH = 5 #If fine-tuning is done in two steps, which epochs should we start fine-tuning the pre-trained model
 FREEZE_ALL = False # Whether to freeze all parameters of the self-supervised pre-training model
 EARLY_STOPPING = 1000 #early_stopping
