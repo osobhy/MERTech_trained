@@ -1,25 +1,17 @@
 import datetime
+date = datetime.datetime.now()
 import sys
-import os
-import random
-import argparse  # NEW
-
-import numpy as np
-import torch
-from transformers import Wav2Vec2FeatureExtractor
-
 sys.path.append('./function')
 from function.fit import *
 from function.model import *
 from function.load_data import *
 from function.config import *
-
-# Parse optional resume / extra‑epoch flags
-parser = argparse.ArgumentParser()  # NEW
-parser.add_argument('--resume_ckpt', type=str, default=None, help='checkpoint path')  # NEW
-parser.add_argument('--extra_epochs', type=int, default=0, help='additional epochs')  # NEW
-args = parser.parse_args()  # NEW
-
+from transformers import Wav2Vec2FeatureExtractor
+import torch
+import numpy as np
+import os
+import random
+#os.environ['CUDA_VISIBLE_DEVICES'] = '1' # change
 print("Using device:", device)
 print(" torch.cuda.is_available():", torch.cuda.is_available())
 print(" torch.cuda.device_count():", torch.cuda.device_count())
@@ -40,13 +32,12 @@ get_random_seed(42)
 
 #Obtain the weight of the loss function to alleviate class imbalance
 def get_weight(Ytr):#(1508, 375, 7)
-    mp = Ytr[:].sum(0).sum(0) #(7,)
-    mmp = mp.astype(np.float32) / mp.sum()
-    cc=((mmp.mean() / mmp) * ((1-mmp)/(1 - mmp.mean())))**0.3
-    inverse_feq = torch.from_numpy(cc)
-    return inverse_feq
+	mp = Ytr[:].sum(0).sum(0) #(7,)
+	mmp = mp.astype(np.float32) / mp.sum()
+	cc=((mmp.mean() / mmp) * ((1-mmp)/(1 - mmp.mean())))**0.3
+	inverse_feq = torch.from_numpy(cc)
+	return inverse_feq
 
-date = datetime.datetime.now()  # keep after seed
 out_model_fn = './data/model/%d%d%d%d:%d:%d/%s/'%(date.year,date.month,date.day,date.hour,date.minute,date.second,saveName)
 if not os.path.exists(out_model_fn):
     os.makedirs(out_model_fn)
@@ -74,19 +65,12 @@ va_loader = torch.utils.data.DataLoader(Data2Torch2([Xvas["input_values"], Yva, 
 print ('finishing data building...')
 
 model = SSLNet(url=URL, class_num=NUM_LABELS*(MAX_MIDI-MIN_MIDI+1),weight_sum=1,freeze_all=FREEZE_ALL).to(device)
+print(type(model))
+print("before modify:")
 
-# Resume weights if provided
-if args.resume_ckpt:  # NEW
-        ckpt = torch.load(args.resume_ckpt, map_location='cpu')  # NEW
-    state_dict = ckpt['model'] if isinstance(ckpt, dict) and 'model' in ckpt else ckpt  # NEW
-    model.load_state_dict(state_dict)  # NEW
-    if isinstance(ckpt, dict) and 'epoch' in ckpt:  # NEW
-        print(f"Resumed weights from epoch {ckpt['epoch']}")  # NEW  # NEW
-    print(f"Resumed from {args.resume_ckpt}")  # NEW
-
+#Obtain the weight of weighted loss
 inverse_feq = get_weight(Ytr.transpose(0,2,1))
 
-total_epochs = 200 + args.extra_epochs  # NEW
-
-Trer = Trainer(model, 1e-3, total_epochs, out_model_fn, validation_interval=5, save_interval=100)
+#Start training
+Trer = Trainer(model, 1e-3, 500, out_model_fn, validation_interval=5, save_interval=100) #0.01
 Trer.fit(tr_loader, va_loader,inverse_feq)
