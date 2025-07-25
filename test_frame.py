@@ -13,9 +13,7 @@ import os
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--wav_dir",  required=True)
 parser.add_argument("--ckpt",     required=True)
-parser.add_argument("--out_dir",  required=True)
 args = parser.parse_args()
 
 
@@ -37,7 +35,7 @@ def start_test():
 
     print('finishing loading model')
 
-    wav_dir = args.wav_dir
+    wav_dir = DATASET + '/data'
     csv_dir = DATASET + '/labels'
     test_group = ['test']
     Xte, Yte, Yte_p, Yte_o,  _, _ = load(wav_dir, csv_dir, test_group, None, None)
