@@ -11,6 +11,7 @@ import numpy as np
 import random
 import os
 import argparse
+from transformers import Wav2Vec2FeatureExtractor
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--ckpt",     required=True)
