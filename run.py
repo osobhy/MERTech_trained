@@ -77,8 +77,11 @@ model = SSLNet(url=URL, class_num=NUM_LABELS*(MAX_MIDI-MIN_MIDI+1),weight_sum=1,
 
 # Resume weights if provided
 if args.resume_ckpt:  # NEW
-    ckpt = torch.load(args.resume_ckpt, map_location='cpu')  # NEW
-    model.load_state_dict(ckpt['model'])  # NEW
+        ckpt = torch.load(args.resume_ckpt, map_location='cpu')  # NEW
+    state_dict = ckpt['model'] if isinstance(ckpt, dict) and 'model' in ckpt else ckpt  # NEW
+    model.load_state_dict(state_dict)  # NEW
+    if isinstance(ckpt, dict) and 'epoch' in ckpt:  # NEW
+        print(f"Resumed weights from epoch {ckpt['epoch']}")  # NEW  # NEW
     print(f"Resumed from {args.resume_ckpt}")  # NEW
 
 inverse_feq = get_weight(Ytr.transpose(0,2,1))
