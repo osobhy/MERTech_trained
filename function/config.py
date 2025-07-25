@@ -5,7 +5,7 @@ URL = "m-a-p/MERT-v1-95M" #model URL
 TIME_LENGTH = 5 #5 seconds
 LENGTH = 375 #number of frame in 3 seconds,225
 NUM_LABELS = 7 #number of IPTs
-BATCH_SIZE = 10
+BATCH_SIZE = 16
 SAMPLE_RATE = 44100 #Raw audio sampling rate
 MERT_SAMPLE_RATE = 24000 if "MERT" in URL else 16000 #input audio sampling rate of MERT
 FEATURE_RATE = 75 # FEATURE_RATE = 1000//ZHEN_LENGTH，Sampling rate of feature extracted from MERT

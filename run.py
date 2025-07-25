@@ -12,13 +12,13 @@ import numpy as np
 import os
 import random
 #os.environ['CUDA_VISIBLE_DEVICES'] = '1' # change
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("Using device:", device)
 print(" torch.cuda.is_available():", torch.cuda.is_available())
 print(" torch.cuda.device_count():", torch.cuda.device_count())
 if device.type == "cuda":
     print(" current_device:", torch.cuda.current_device())
     print(" device_name   :", torch.cuda.get_device_name(device.index))
+max_epochs = int(os.getenv("MAX_EPOCHS", "10000"))
 
 def get_random_seed(seed):
     random.seed(seed)
@@ -72,5 +72,5 @@ print("before modify:")
 inverse_feq = get_weight(Ytr.transpose(0,2,1))
 
 #Start training
-Trer = Trainer(model, 1e-3, 10000, out_model_fn, validation_interval=5, save_interval=100) #0.01
+Trer = Trainer(model, 1e-3, 200, out_model_fn, validation_interval=5, save_interval=100) #0.01
 Trer.fit(tr_loader, va_loader,inverse_feq)
