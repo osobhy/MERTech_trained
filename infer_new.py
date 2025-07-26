@@ -10,6 +10,7 @@ Usage:
 """
 import argparse, torch, torchaudio
 from transformers import Wav2Vec2FeatureExtractor
+import sys
 sys.path.append('./function')
 
 # ────────────────────────────────────────────────────────────────────────────
