@@ -10,6 +10,7 @@ Usage:
 """
 import argparse, torch, torchaudio
 from transformers import Wav2Vec2FeatureExtractor
+sys.path.append('./function')
 
 # ────────────────────────────────────────────────────────────────────────────
 # Repo‑level imports (grab all the config constants you already have)
