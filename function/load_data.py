@@ -99,7 +99,7 @@ def load(wav_dir, csv_dir, groups, avg=None, std=None):
 
         saved_data_path = audio_path.replace('.flac', '_multi9898.pt').replace('.wav', '_multi9898.pt')
         if os.path.exists(saved_data_path):
-            return torch.load(saved_data_path)
+            return torch.load(saved_data_path, weights_only=False)
 
         #Load audio features
         feature = get_wav(audio_path) #feature's shape(The number of Time frame)
