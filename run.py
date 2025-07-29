@@ -10,7 +10,7 @@ from transformers import Wav2Vec2FeatureExtractor
 import torch
 import numpy as np
 import os
-from opendelta import Visualization
+from bigmodelvis import Visualization
 import random
 
 #os.environ['CUDA_VISIBLE_DEVICES'] = '1' # change
