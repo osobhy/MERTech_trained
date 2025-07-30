@@ -60,7 +60,7 @@ Xtrs = processor(Xtr, sampling_rate=MERT_SAMPLE_RATE, return_tensors="pt")
 Xvas = processor(Xva, sampling_rate=MERT_SAMPLE_RATE, return_tensors="pt")
 
 # Build Dataloader
-t_kwargs = {'batch_size': BATCH_SIZE, 'num_workers': 2, 'pin_memory': True, 'drop_last': True}
+t_kwargs = {'batch_size': BATCH_SIZE, 'num_workers': 21, 'pin_memory': True, 'drop_last': True}
 v_kwargs = {'batch_size': 1, 'num_workers': 2, 'pin_memory': True}
 tr_loader = torch.utils.data.DataLoader(Data2Torch2([Xtrs["input_values"], Ytr, Ytr_p, Ytr_o]), shuffle=True, **t_kwargs)
 va_loader = torch.utils.data.DataLoader(Data2Torch2([Xvas["input_values"], Yva, Yva_p, Yva_o]), **v_kwargs)
