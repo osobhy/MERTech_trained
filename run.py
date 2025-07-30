@@ -10,7 +10,7 @@ from transformers import Wav2Vec2FeatureExtractor
 import torch
 import numpy as np
 import os
-from bigmodelvis import Visualization
+#from bigmodelvis import Visualization
 import random
 
 #os.environ['CUDA_VISIBLE_DEVICES'] = '1' # change
@@ -69,7 +69,7 @@ print ('finishing data building...')
 model = SSLNet(url=URL, class_num=NUM_LABELS*(MAX_MIDI-MIN_MIDI+1),weight_sum=1,freeze_all=FREEZE_ALL).to(device)
 print(type(model))
 print("before modify:")
-print(Visualization(model).structure_graph())
+#print(Visualization(model).structure_graph())
 
 #Obtain the weight of weighted loss
 inverse_feq = get_weight(Ytr.transpose(0,2,1))
