@@ -9,7 +9,7 @@ class SSLNet(nn.Module):
     def __init__(self,
                  url,
                  class_num,
-                 weight_sum=False,
+                 weight_sum=True,
                  freeze_all=False
                  ):
         super().__init__()
