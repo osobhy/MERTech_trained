@@ -16,6 +16,7 @@ from transformers import Wav2Vec2FeatureExtractor
 parser = argparse.ArgumentParser()
 parser.add_argument("--ckpt",     required=True)
 args = parser.parse_args()
+ckpt = torch.load(args.ckpt, map_location="cpu")
 print(">>> checkpoint type:", type(ckpt))
 if isinstance(ckpt, dict):
     print(">>> ckpt keys:", ckpt.keys())
