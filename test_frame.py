@@ -13,13 +13,13 @@ import os
 import argparse
 from transformers import Wav2Vec2FeatureExtractor
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--ckpt",     required=True)
-args = parser.parse_args()
-ckpt = torch.load(args.ckpt, map_location="cpu")
-print(">>> checkpoint type:", type(ckpt))
-if isinstance(ckpt, dict):
-    print(">>> ckpt keys:", ckpt.keys())
+#parser = argparse.ArgumentParser()
+#parser.add_argument("--ckpt",     required=True)
+#args = parser.parse_args()
+#ckpt = torch.load(args.ckpt, map_location="cpu")
+#print(">>> checkpoint type:", type(ckpt))
+#if isinstance(ckpt, dict):
+ #   print(">>> ckpt keys:", ckpt.keys())
 
 
 def start_test():
@@ -35,7 +35,7 @@ def start_test():
 
     #load model
     model = SSLNet(url=URL, class_num=NUM_LABELS*(MAX_MIDI-MIN_MIDI+1), weight_sum=1, freeze_all=FREEZE_ALL).to(device)
-    state_dict = torch.load(args.ckpt, map_location="cpu")
+    state_dict = torch.load("best_e_1370", map_location="cpu")
     model.load_state_dict(state_dict)
 
     print('finishing loading model')
