@@ -3,7 +3,7 @@ import torch
 FEATURE_RATE = 75 # FEATURE_RATE = 1000//ZHEN_LENGTH，Sampling rate of feature extracted from MERT
 
 URL = "m-a-p/MERT-v1-95M" #model URL
-TIME_LENGTH = 3 #5 seconds
+TIME_LENGTH = 5 #5 seconds
 LENGTH = TIME_LENGTH * FEATURE_RATE #number of frame in 3 seconds,225
 NUM_LABELS = 7 #number of IPTs
 BATCH_SIZE = 10
