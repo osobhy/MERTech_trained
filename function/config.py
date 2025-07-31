@@ -7,8 +7,9 @@ TIME_LENGTH = 3 #5 seconds
 LENGTH = TIME_LENGTH * FEATURE_RATE #number of frame in 3 seconds,225
 NUM_LABELS = 7 #number of IPTs
 BATCH_SIZE = 10
-SAMPLE_RATE = MERT_SAMPLE_RATE #Raw audio sampling rate
 MERT_SAMPLE_RATE = 24000 if "MERT" in URL else 16000 #input audio sampling rate of MERT
+
+SAMPLE_RATE = MERT_SAMPLE_RATE #Raw audio sampling rate
 TWO_STEP = False # Whether two-step finetuning
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
