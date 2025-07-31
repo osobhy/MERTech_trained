@@ -35,7 +35,7 @@ def start_test():
 
     #load model
     model = SSLNet(url=URL, class_num=NUM_LABELS*(MAX_MIDI-MIN_MIDI+1), weight_sum=1, freeze_all=FREEZE_ALL).to(device)
-    state_dict = torch.load("best_e_1370", map_location="cpu")
+    state_dict = torch.load("data/model/202573021:53:47/mul_onset7_pitch_IPT_share_weight_weighted_loss-MERT-v1-95M/best_e_1370", map_location="cpu")
     model.load_state_dict(state_dict)
 
     print('finishing loading model')
