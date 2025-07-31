@@ -16,6 +16,9 @@ from transformers import Wav2Vec2FeatureExtractor
 parser = argparse.ArgumentParser()
 parser.add_argument("--ckpt",     required=True)
 args = parser.parse_args()
+print(">>> checkpoint type:", type(ckpt))
+if isinstance(ckpt, dict):
+    print(">>> ckpt keys:", ckpt.keys())
 
 
 def start_test():
