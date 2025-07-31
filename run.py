@@ -75,5 +75,5 @@ print("before modify:")
 inverse_feq = get_weight(Ytr.transpose(0,2,1))
 
 #Start training
-Trer = Trainer(model, 1e-3, 150, out_model_fn, validation_interval=5, save_interval=100) #0.01
+Trer = Trainer(model, 1e-3, 120, out_model_fn, validation_interval=5, save_interval=100) #0.01
 Trer.fit(tr_loader, va_loader,inverse_feq)
